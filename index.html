@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V360 QA · Piloto Wave 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#2A1540;
+  --ink-2:#4A3860;
+  --ink-3:#8478A0;
+  --line:#E5E0EC;
+  --line-soft:#F0ECF5;
+  --paper:#FFFFFF;
+  --bg:#F7F5FA;
+  --bg-dark:#2A1540;
+  --accent:#FF5C13;
+  --accent-soft:#FFF1E8;
+  --accent-dark:#E04A0A;
+  --ok:#0F8A50;
+  --ok-soft:#E6F4EC;
+  --danger:#C44040;
+  --danger-soft:#FCE7E7;
+  --amber:#F59E0B;
+  --amber-soft:#FEF3C7;
+  --blue:#0EA5E9;
+  --blue-soft:#E0F2FE;
+
+  --sidebar-bg:#2A1540;
+  --sidebar-accent:#3D2657;
+
+  --shadow:0 1px 3px rgba(42,21,64,.08),0 1px 2px rgba(42,21,64,.05);
+  --shadow-lg:0 10px 15px -3px rgba(42,21,64,.10),0 4px 6px -2px rgba(42,21,64,.05);
+  --radius:14px;
+  --radius-sm:8px;
+  --radius-pill:999px;
+  --transition:all .2s ease;
+
+  --font-h:'Ubuntu','Inter',sans-serif;
+  --font-b:'Inter',sans-serif;
+}
+html{font-size:15px}
+body{font-family:var(--font-b);background:var(--bg);color:var(--ink);display:flex;min-height:100vh;overflow:hidden}
+h1,h2,h3,h4{font-family:var(--font-h);color:var(--ink)}
+
+.sidebar{width:280px;min-width:280px;background:var(--sidebar-bg);color:#E2DBEC;display:flex;flex-direction:column;padding:0;height:100vh;overflow-y:auto;z-index:10}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.brand-row{display:flex;align-items:center;gap:10px}
+.brand-mark{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:1rem}
+.sidebar-header h1{font-size:1.2rem;font-weight:700;letter-spacing:-.02em;color:#fff}
+.sidebar-header h1 .accent{color:var(--accent)}
+.sidebar-header p{font-size:.72rem;color:rgba(255,255,255,.55);margin-top:4px;letter-spacing:.05em;text-transform:uppercase}
+
+.reviewer-tabs{display:flex;gap:4px;margin-top:12px;background:rgba(255,255,255,.04);padding:3px;border-radius:10px;border:1px solid rgba(255,255,255,.06)}
+.reviewer-tab{flex:1;padding:7px 10px;border:none;background:transparent;color:rgba(255,255,255,.6);font-size:.78rem;font-weight:600;cursor:pointer;border-radius:7px;transition:var(--transition);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.reviewer-tab:hover{color:#fff;background:rgba(255,255,255,.04)}
+.reviewer-tab.active{background:var(--accent);color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.reviewer-tab .tab-count{background:rgba(0,0,0,.2);padding:1px 6px;border-radius:8px;font-size:.65rem;font-weight:700}
+.reviewer-tab.active .tab-count{background:rgba(255,255,255,.2)}
+
+.section{padding:16px 20px;border-top:1px solid rgba(255,255,255,.06)}
+.section h3{font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.55);margin-bottom:10px;font-weight:700;font-family:var(--font-h)}
+.filter-btn,.pqs-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 12px;border:none;background:transparent;color:#E2DBEC;font-size:.82rem;cursor:pointer;border-radius:var(--radius-sm);transition:var(--transition);text-align:left;font-family:inherit;margin-bottom:3px}
+.filter-btn:hover,.pqs-btn:hover{background:rgba(255,255,255,.06)}
+.filter-btn.active,.pqs-btn.active{background:rgba(255,92,19,.2);color:#fff;font-weight:600}
+.filter-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.filter-dot.all{background:#fff}
+.filter-dot.new{background:rgba(255,255,255,.4)}
+.filter-dot.approved{background:var(--ok)}
+.filter-dot.rejected{background:var(--danger)}
+.filter-dot.maybe{background:var(--amber)}
+.filter-count{margin-left:auto;font-size:.72rem;background:rgba(255,255,255,.08);padding:2px 8px;border-radius:10px;min-width:24px;text-align:center;font-weight:600}
+.pqs-tag{font-size:.6rem;background:rgba(255,255,255,.15);padding:2px 6px;border-radius:4px;font-weight:700;font-family:var(--font-h);letter-spacing:.05em}
+
+.progress-section{padding:20px;display:flex;flex-direction:column;align-items:center;border-top:1px solid rgba(255,255,255,.06)}
+.progress-ring-container{position:relative;width:100px;height:100px}
+.progress-ring{transform:rotate(-90deg)}
+.progress-ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
+.progress-ring-fill{fill:none;stroke:var(--accent);stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .6s ease}
+.progress-text{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.4rem;font-weight:700;color:#fff;font-family:var(--font-h)}
+.progress-label{margin-top:8px;font-size:.72rem;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.08em}
+
+.stat-row{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:.82rem;color:#E2DBEC}
+.stat-row .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.stat-row .val{margin-left:auto;font-weight:700;color:#fff;font-family:var(--font-h)}
+
+.kbd{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;font-size:.68rem;font-family:monospace;color:#E2DBEC;border:1px solid rgba(255,255,255,.12)}
+.shortcut-row{display:flex;align-items:center;gap:6px;font-size:.72rem;color:rgba(255,255,255,.6);padding:3px 0}
+
+.export-section{padding:16px 20px;margin-top:auto;border-top:1px solid rgba(255,255,255,.06)}
+.export-btn{width:100%;padding:12px;border:none;border-radius:var(--radius-sm);font-size:.85rem;font-weight:600;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.export-btn.primary{background:var(--accent);color:#fff}
+.export-btn.primary:hover{background:var(--accent-dark)}
+.export-btn.secondary{background:rgba(255,255,255,.06);color:#E2DBEC;margin-top:8px}
+.export-btn.secondary:hover{background:rgba(255,255,255,.12)}
+
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{display:flex;align-items:center;padding:16px 32px;background:#fff;border-bottom:1px solid var(--line);gap:16px;flex-shrink:0}
+.topbar-nav{display:flex;gap:8px}
+.nav-btn{width:40px;height:40px;border-radius:var(--radius-sm);border:1px solid var(--line);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);font-size:1.1rem;color:var(--ink-2);font-family:inherit}
+.nav-btn:hover{background:var(--bg);border-color:var(--ink-3)}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed}
+.topbar-counter{font-size:.9rem;color:var(--ink-2);font-weight:600;margin-left:4px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.undo-btn{padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--line);background:#fff;cursor:pointer;font-size:.8rem;color:var(--ink-2);transition:var(--transition);display:flex;align-items:center;gap:6px;font-family:inherit}
+.undo-btn:hover{background:var(--bg)}
+.undo-btn:disabled{opacity:.3;cursor:not-allowed}
+.sync-status{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;color:var(--ink-3);padding:4px 10px;border-radius:10px;background:var(--bg)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.sync-status.syncing .sync-dot{background:var(--amber);animation:pulse 1.5s infinite}
+.sync-status.offline .sync-dot{background:var(--danger)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.card-area{flex:1;overflow-y:auto;padding:24px 32px;display:flex;justify-content:center;align-items:flex-start}
+.card-wrapper{width:100%;max-width:880px}
+.card{background:var(--paper);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;animation:cardIn .3s ease}
+@keyframes cardIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+@keyframes cardInReverse{from{opacity:0;transform:translateX(-30px)}to{opacity:1;transform:translateX(0)}}
+.card.reverse{animation-name:cardInReverse}
+
+.card-header{padding:24px 28px 16px;border-bottom:1px solid var(--line)}
+.card-header-top{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.card-avatar{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,var(--ink) 0%,#3D2657 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;flex-shrink:0;font-family:var(--font-h)}
+.card-title-block{flex:1;min-width:0}
+.card-title{font-size:1.3rem;font-weight:700;color:var(--ink);line-height:1.3;font-family:var(--font-h)}
+.card-subtitle{font-size:.82rem;color:var(--ink-2);margin-top:4px}
+.badge{padding:4px 12px;border-radius:var(--radius-pill);font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;font-family:var(--font-h)}
+.badge-new{background:var(--line-soft);color:var(--ink-3)}
+.badge-approved{background:var(--ok-soft);color:#065F46}
+.badge-rejected{background:var(--danger-soft);color:#991B1B}
+.badge-maybe{background:var(--amber-soft);color:#92400E}
+.badge-pqs1{background:#FEE4D6;color:#9A2A12}
+.badge-pqs2{background:#DDD5FA;color:#3F1B82}
+.badge-pqs4{background:#FBE0E0;color:#7E1E1E}
+.badge-pending{background:var(--amber-soft);color:#92400E}
+.badge-distress{background:var(--danger-soft);color:#991B1B}
+
+.chips-row{display:flex;flex-wrap:wrap;gap:8px;padding:12px 28px 0}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius-pill);font-size:.78rem;font-weight:500;background:var(--line-soft);color:var(--ink-2);text-decoration:none;transition:var(--transition);border:none;cursor:default;font-family:inherit}
+a.chip{cursor:pointer}
+a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
+
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:16px 28px}
+.stat-card{background:var(--bg);border-radius:var(--radius-sm);padding:12px;text-align:center;border:1px solid var(--line-soft)}
+.stat-card .stat-val{font-size:1.1rem;font-weight:700;color:var(--ink);line-height:1.2;font-family:var(--font-h)}
+.stat-card .stat-lbl{font-size:.65rem;color:var(--ink-3);margin-top:4px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
+
+.signal-section{padding:16px 28px 0}
+.signal-section h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;font-weight:700;font-family:var(--font-h)}
+.signal-box{background:var(--accent-soft);border:1px solid #FBD0B5;border-radius:var(--radius-sm);padding:14px 18px}
+.signal-pqs1{background:var(--danger-soft);border-color:#F5C0C0}
+.signal-pqs2{background:var(--blue-soft);border-color:#BDE0F8}
+.signal-pqs4{background:var(--accent-soft);border-color:#FBD0B5}
+.signal-box .signal-title{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:6px;font-family:var(--font-h)}
+.signal-box .signal-text{font-size:.84rem;color:var(--ink-2);line-height:1.55}
+.signal-box .signal-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:.74rem;color:var(--ink-3)}
+
+.decisores-section{padding:16px 28px 0}
+.decisores-section h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;font-weight:700;font-family:var(--font-h)}
+.decisores-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.decisor-card{background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:6px}
+.decisor-card.rank1{border-color:var(--accent);background:var(--accent-soft)}
+.decisor-rank{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);font-weight:700;font-family:var(--font-h)}
+.decisor-rank.r1{color:var(--accent-dark)}
+.decisor-nome{font-size:.86rem;font-weight:700;color:var(--ink);font-family:var(--font-h);line-height:1.3}
+.decisor-cargo{font-size:.72rem;color:var(--ink-2);line-height:1.3}
+.decisor-actions{display:flex;gap:6px;margin-top:auto;padding-top:6px}
+.decisor-link{display:inline-flex;align-items:center;gap:4px;font-size:.7rem;text-decoration:none;color:var(--ink-2);padding:3px 8px;border-radius:6px;background:#fff;border:1px solid var(--line)}
+.decisor-link:hover{background:var(--accent-soft);color:var(--accent-dark);border-color:var(--accent)}
+.decisor-link.linkedin{background:#0A66C2;color:#fff;border-color:#0A66C2}
+.decisor-link.linkedin:hover{background:#084B94}
+.decisor-validation{font-size:.65rem;color:var(--ink-3);margin-top:auto}
+.decisor-validation.uncertain{color:var(--amber)}
+.decisor-validation.passed{color:var(--ok)}
+
+.pvps-section{padding:16px 28px 0}
+.pvps-section h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;font-weight:700;font-family:var(--font-h)}
+.pvp-tabs{display:flex;gap:4px;background:var(--bg);padding:3px;border-radius:10px;border:1px solid var(--line)}
+.pvp-tab{flex:1;padding:8px 12px;border:none;background:transparent;color:var(--ink-2);font-size:.78rem;font-weight:600;cursor:pointer;border-radius:7px;font-family:inherit;transition:var(--transition)}
+.pvp-tab:hover{color:var(--ink);background:rgba(0,0,0,.04)}
+.pvp-tab.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.pvp-content{margin-top:10px;background:#FFFBF7;border:1px solid #FBD0B5;border-radius:var(--radius-sm);overflow:hidden}
+.pvp-subject-row{padding:10px 14px;background:var(--accent-soft);border-bottom:1px solid #FBD0B5;display:flex;align-items:center;gap:8px}
+.pvp-subject-row .lbl{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--accent-dark);font-family:var(--font-h)}
+.pvp-subject-row .subject{font-size:.86rem;font-weight:600;color:var(--ink)}
+.pvp-body{padding:14px 16px;font-size:.85rem;color:var(--ink-2);line-height:1.62;white-space:pre-wrap}
+.pvp-whatsapp{padding:10px 14px;background:#E8F5EC;border-top:1px solid #BFD5C5}
+.pvp-whatsapp .lbl{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:#065F46;margin-bottom:4px;font-family:var(--font-h)}
+.pvp-whatsapp .text{font-size:.78rem;color:var(--ink-2);line-height:1.55;white-space:pre-wrap}
+
+.noticias-section{padding:14px 28px 0}
+.noticias-section h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:8px;font-weight:700;font-family:var(--font-h)}
+.noticia-chip{display:inline-block;margin-right:6px;margin-bottom:6px;background:var(--bg);border:1px solid var(--line);padding:6px 12px;border-radius:var(--radius-pill);font-size:.74rem;color:var(--ink-2);text-decoration:none}
+.noticia-chip:hover{background:var(--accent-soft);color:var(--accent-dark);border-color:var(--accent)}
+
+.notes-section{padding:14px 28px 16px}
+.notes-section h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:8px;font-weight:700;font-family:var(--font-h)}
+.notes-textarea{width:100%;min-height:80px;padding:12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-family:inherit;font-size:.84rem;resize:vertical;transition:border-color .2s;color:var(--ink);background:#fff}
+.notes-textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(255,92,19,.12)}
+.notes-textarea::placeholder{color:var(--ink-3)}
+
+.action-buttons{display:flex;gap:10px;padding:16px 28px 24px}
+.action-btn{flex:1;padding:14px;border:none;border-radius:var(--radius-sm);font-size:.9rem;font-weight:700;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit}
+.action-btn:active{transform:scale(.97)}
+.btn-approve{background:var(--ok);color:#fff}
+.btn-approve:hover{background:#0B6F40;box-shadow:0 4px 12px rgba(15,138,80,.3)}
+.btn-reject{background:var(--danger);color:#fff}
+.btn-reject:hover{background:#A23535;box-shadow:0 4px 12px rgba(196,64,64,.3)}
+.btn-maybe{background:var(--amber);color:#fff}
+.btn-maybe:hover{background:#D88806;box-shadow:0 4px 12px rgba(245,158,11,.3)}
+
+.empty-state,.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center}
+.empty-state-icon{font-size:3rem;margin-bottom:16px;opacity:.3}
+.empty-state h2,.loading-state h2{font-size:1.2rem;color:var(--ink-2);font-weight:600;margin-bottom:8px}
+.empty-state p{font-size:.88rem;color:var(--ink-3)}
+.loading-spinner{width:40px;height:40px;border:4px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 24px;border-radius:var(--radius-sm);color:#fff;font-size:.85rem;font-weight:600;transform:translateY(100px);opacity:0;transition:all .3s ease;z-index:100;box-shadow:var(--shadow-lg)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.green{background:var(--ok)}
+.toast.red{background:var(--danger)}
+.toast.amber{background:var(--amber)}
+.toast.blue{background:var(--blue)}
+
+@media(max-width:1200px){.sidebar{width:240px;min-width:240px}.stats-grid{grid-template-columns:repeat(2,1fr)}.decisores-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.card-area{padding:16px}.topbar{padding:12px 16px}}
+@media(max-width:768px){body{flex-direction:column}.sidebar{width:100%;min-width:100%;height:auto;max-height:50vh;order:2}.main{order:1;height:auto;min-height:60vh}.action-buttons{flex-direction:column}}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15)}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-header">
+    <div class="brand-row">
+      <div class="brand-mark">V</div>
+      <h1>V360 · <span class="accent">QA</span></h1>
+    </div>
+    <p>Piloto Wave 1 · 58 leads</p>
+    <div class="reviewer-tabs" role="tablist" aria-label="Revisor">
+      <button class="reviewer-tab" id="tabThali" onclick="setReviewer('Thali')">
+        <span>Thali</span>
+        <span class="tab-count" id="countThali">0</span>
+      </button>
+      <button class="reviewer-tab" id="tabAnaLu" onclick="setReviewer('Ana Lu')">
+        <span>Ana Lu</span>
+        <span class="tab-count" id="countAnaLu">0</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h3>Segmento de dor</h3>
+    <button class="pqs-btn active" data-pqs="all" onclick="setPqsFilter('all')">
+      <span class="pqs-tag">ALL</span> Todos
+      <span class="filter-count" id="pqsCountAll">0</span>
+    </button>
+    <button class="pqs-btn" data-pqs="pqs1" onclick="setPqsFilter('pqs1')">
+      <span class="pqs-tag">PQS-1</span> Pagamento Quebrado
+      <span class="filter-count" id="pqsCountP1">0</span>
+    </button>
+    <button class="pqs-btn" data-pqs="pqs2" onclick="setPqsFilter('pqs2')">
+      <span class="pqs-tag">PQS-2</span> Escala Manual
+      <span class="filter-count" id="pqsCountP2">0</span>
+    </button>
+    <button class="pqs-btn" data-pqs="pqs4" onclick="setPqsFilter('pqs4')">
+      <span class="pqs-tag">PQS-4</span> Risco Fiscal
+      <span class="filter-count" id="pqsCountP4">0</span>
+    </button>
+  </div>
+
+  <div class="section">
+    <h3>Status</h3>
+    <button class="filter-btn active" data-filter="all" onclick="setStatusFilter('all')">
+      <span class="filter-dot all"></span> Todos
+      <span class="filter-count" id="filterCountAll">0</span>
+    </button>
+    <button class="filter-btn" data-filter="new" onclick="setStatusFilter('new')">
+      <span class="filter-dot new"></span> Novos
+      <span class="filter-count" id="filterCountNew">0</span>
+    </button>
+    <button class="filter-btn" data-filter="approved" onclick="setStatusFilter('approved')">
+      <span class="filter-dot approved"></span> Aprovados
+      <span class="filter-count" id="filterCountApproved">0</span>
+    </button>
+    <button class="filter-btn" data-filter="rejected" onclick="setStatusFilter('rejected')">
+      <span class="filter-dot rejected"></span> Rejeitados
+      <span class="filter-count" id="filterCountRejected">0</span>
+    </button>
+    <button class="filter-btn" data-filter="maybe" onclick="setStatusFilter('maybe')">
+      <span class="filter-dot maybe"></span> Talvez
+      <span class="filter-count" id="filterCountMaybe">0</span>
+    </button>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-ring-container">
+      <svg class="progress-ring" width="100" height="100" viewBox="0 0 100 100">
+        <circle class="progress-ring-bg" cx="50" cy="50" r="42"/>
+        <circle class="progress-ring-fill" id="progressRing" cx="50" cy="50" r="42" stroke-dasharray="263.89" stroke-dashoffset="263.89"/>
+      </svg>
+      <div class="progress-text" id="progressText">0%</div>
+    </div>
+    <div class="progress-label">Revisados</div>
+  </div>
+
+  <div class="section" style="border-top:1px solid rgba(255,255,255,.06)">
+    <div class="stat-row"><span class="dot" style="background:var(--ok)"></span> Aprovados <span class="val" id="statApproved">0</span></div>
+    <div class="stat-row"><span class="dot" style="background:var(--danger)"></span> Rejeitados <span class="val" id="statRejected">0</span></div>
+    <div class="stat-row"><span class="dot" style="background:var(--amber)"></span> Talvez <span class="val" id="statMaybe">0</span></div>
+  </div>
+
+  <div class="section">
+    <h3>Atalhos</h3>
+    <div class="shortcut-row"><kbd class="kbd">&uarr;</kbd> Aprovar</div>
+    <div class="shortcut-row"><kbd class="kbd">&darr;</kbd> Rejeitar</div>
+    <div class="shortcut-row"><kbd class="kbd">Shift</kbd> Talvez</div>
+    <div class="shortcut-row"><kbd class="kbd">&larr;</kbd> / <kbd class="kbd">&rarr;</kbd> Navegar</div>
+    <div class="shortcut-row"><kbd class="kbd">Ctrl+Z</kbd> Desfazer</div>
+  </div>
+
+  <div class="export-section">
+    <button class="export-btn primary" onclick="exportCSV()">Export CSV</button>
+    <button class="export-btn secondary" onclick="exportJSON()">Export JSON (todos revisores)</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-nav">
+      <button class="nav-btn" id="btnPrev" onclick="navigate(-1)" title="Anterior (←)">&larr;</button>
+      <button class="nav-btn" id="btnNext" onclick="navigate(1)" title="Próximo (→)">&rarr;</button>
+    </div>
+    <span class="topbar-counter" id="topbarCounter">0 / 0</span>
+    <div class="topbar-right">
+      <span class="sync-status" id="syncStatus"><span class="sync-dot"></span><span id="syncText">Sincronizado</span></span>
+      <button class="undo-btn" id="undoBtn" onclick="undo()" disabled title="Ctrl+Z">Desfazer</button>
+    </div>
+  </div>
+
+  <div class="card-area" id="cardArea">
+    <div class="card-wrapper"><div class="card"><div class="loading-state">
+      <div class="loading-spinner"></div>
+      <h2>Carregando leads do Supabase...</h2>
+    </div></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://dzsvbklojjvmjwcizkxi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6c3Zia2xvamp2bWp3Y2l6a3hpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ4MzY2OTMsImV4cCI6MjA5MDQxMjY5M30.jzE0RhN4UWEH13dUNqFY2XtPbnyXwuE_d_FvDVFjg88';
+const TABLE_LEADS = 'v360_leads';
+const TABLE_REVIEWS = 'v360_leads_reviews';
+const BATCH_ID = 'wave1-2026-05-11';
+
+let LEADS_RAW = [];
+let reviewsByKey = {};
+let reviewsAllReviewers = {};
+let currentReviewer = null;
+let currentStatusFilter = 'all';
+let currentPqsFilter = 'all';
+let currentIndex = 0;
+let filteredIndices = [];
+let undoStack = [];
+let navDirection = 1;
+let notesSaveTimer = null;
+let dataLoaded = false;
+let currentPvpTab = 'persona_1';
+
+async function supaFetch(path, options = {}) {
+  const url = `${SUPABASE_URL}/rest/v1/${path}`;
+  const prefer = options.method === 'POST' ? 'resolution=merge-duplicates,return=minimal' : 'return=representation';
+  const headers = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json',
+    'Prefer': prefer
+  };
+  const res = await fetch(url, { method: options.method || 'GET', headers, body: options.body });
+  if (!res.ok) {
+    const txt = await res.text();
+    console.error('Supabase error:', res.status, txt);
+    throw new Error(`Supabase ${res.status}: ${txt}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+function getReviewer() { return localStorage.getItem('v360_qa_reviewer'); }
+function setReviewer(name) {
+  localStorage.setItem('v360_qa_reviewer', name);
+  currentReviewer = name;
+  document.getElementById('tabThali').classList.toggle('active', name === 'Thali');
+  document.getElementById('tabAnaLu').classList.toggle('active', name === 'Ana Lu');
+  rebuildReviewsForCurrentReviewer();
+  if (dataLoaded) { buildFilteredIndices(); renderCard(); updateSidebar(); updateReviewerTabCounts(); }
+  showToast(`Validando como ${name}`, 'blue');
+}
+function rebuildReviewsForCurrentReviewer() {
+  reviewsByKey = {};
+  Object.keys(reviewsAllReviewers).forEach(leadId => {
+    const r = reviewsAllReviewers[leadId][currentReviewer];
+    if (r) reviewsByKey[leadId] = r;
+  });
+}
+function updateReviewerTabCounts() {
+  const counts = { Thali: 0, 'Ana Lu': 0 };
+  Object.keys(reviewsAllReviewers).forEach(leadId => {
+    ['Thali', 'Ana Lu'].forEach(name => {
+      const r = (reviewsAllReviewers[leadId] || {})[name];
+      if (r && r.status && r.status !== 'new') counts[name]++;
+    });
+  });
+  const total = LEADS_RAW.length || 0;
+  document.getElementById('countThali').textContent = total ? `${counts.Thali}/${total}` : counts.Thali;
+  document.getElementById('countAnaLu').textContent = total ? `${counts['Ana Lu']}/${total}` : counts['Ana Lu'];
+}
+
+function getItemKey(item) { return item.lead_id || ''; }
+function getReview(idx) {
+  const key = getItemKey(LEADS_RAW[idx]);
+  return reviewsByKey[key] || { status: 'new', notes: '', rating: 0, reviewed_at: '' };
+}
+
+async function loadLeadsFromSupabase() {
+  setSyncStatus('syncing');
+  try {
+    const leads = await supaFetch(`${TABLE_LEADS}?select=*&batch_id=eq.${BATCH_ID}&order=pqs.asc`);
+    LEADS_RAW = leads || [];
+    localStorage.setItem('v360_qa_leads_cache', JSON.stringify(LEADS_RAW));
+    setSyncStatus('synced');
+  } catch (e) {
+    console.warn('Fetch falhou, usando cache:', e);
+    setSyncStatus('offline');
+    const cache = localStorage.getItem('v360_qa_leads_cache');
+    if (cache) { try { LEADS_RAW = JSON.parse(cache); } catch (_) { LEADS_RAW = []; } }
+  }
+}
+
+async function loadReviewsFromSupabase() {
+  reviewsAllReviewers = {};
+  try {
+    const revs = await supaFetch(`${TABLE_REVIEWS}?select=*`);
+    (revs || []).forEach(r => {
+      if (!reviewsAllReviewers[r.lead_id]) reviewsAllReviewers[r.lead_id] = {};
+      reviewsAllReviewers[r.lead_id][r.reviewer_name] = {
+        status: r.status || 'new',
+        notes: r.notes || '',
+        rating: r.rating || 0,
+        reviewed_at: r.reviewed_at || ''
+      };
+    });
+    localStorage.setItem('v360_qa_reviews_cache', JSON.stringify(reviewsAllReviewers));
+  } catch (e) {
+    console.warn('Falha carregar reviews:', e);
+    const cache = localStorage.getItem('v360_qa_reviews_cache');
+    if (cache) { try { reviewsAllReviewers = JSON.parse(cache); } catch (_) { } }
+  }
+  rebuildReviewsForCurrentReviewer();
+}
+
+async function saveReviewToSupabase(key, review) {
+  if (!reviewsAllReviewers[key]) reviewsAllReviewers[key] = {};
+  reviewsAllReviewers[key][currentReviewer] = review;
+  localStorage.setItem('v360_qa_reviews_cache', JSON.stringify(reviewsAllReviewers));
+  try {
+    setSyncStatus('syncing');
+    await supaFetch(TABLE_REVIEWS, {
+      method: 'POST',
+      body: JSON.stringify({
+        lead_id: key,
+        reviewer_name: currentReviewer,
+        status: review.status,
+        notes: review.notes || '',
+        rating: review.rating || 0,
+        reviewed_at: review.reviewed_at,
+        updated_at: new Date().toISOString()
+      })
+    });
+    setSyncStatus('synced');
+  } catch (e) {
+    console.warn('Falha salvar:', e);
+    setSyncStatus('offline');
+  }
+}
+
+function setSyncStatus(state) {
+  const el = document.getElementById('syncStatus');
+  const txt = document.getElementById('syncText');
+  el.classList.remove('syncing', 'offline');
+  if (state === 'syncing') { el.classList.add('syncing'); txt.textContent = 'Sincronizando...'; }
+  else if (state === 'offline') { el.classList.add('offline'); txt.textContent = 'Offline (cache)'; }
+  else txt.textContent = 'Sincronizado';
+}
+
+function setReview(idx, status, notes, rating) {
+  const key = getItemKey(LEADS_RAW[idx]);
+  const prev = reviewsByKey[key] ? { ...reviewsByKey[key] } : { status: 'new', notes: '', rating: 0, reviewed_at: '' };
+  undoStack.push({ key, prev: { ...prev } });
+  if (undoStack.length > 10) undoStack.shift();
+  reviewsByKey[key] = {
+    status,
+    notes: notes !== undefined ? notes : prev.notes,
+    rating: rating !== undefined ? rating : prev.rating,
+    reviewed_at: new Date().toISOString()
+  };
+  document.getElementById('undoBtn').disabled = false;
+  saveReviewToSupabase(key, reviewsByKey[key]);
+}
+
+function buildFilteredIndices() {
+  filteredIndices = [];
+  for (let i = 0; i < LEADS_RAW.length; i++) {
+    const lead = LEADS_RAW[i];
+    if (currentPqsFilter !== 'all' && lead.pqs !== currentPqsFilter) continue;
+    const key = getItemKey(lead);
+    const s = (reviewsByKey[key] || { status: 'new' }).status;
+    if (currentStatusFilter !== 'all' && currentStatusFilter !== s) continue;
+    filteredIndices.push(i);
+  }
+}
+
+function setStatusFilter(f) {
+  currentStatusFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+  buildFilteredIndices();
+  currentIndex = 0;
+  renderCard();
+  updateSidebar();
+}
+
+function setPqsFilter(p) {
+  currentPqsFilter = p;
+  document.querySelectorAll('.pqs-btn').forEach(b => b.classList.toggle('active', b.dataset.pqs === p));
+  buildFilteredIndices();
+  currentIndex = 0;
+  renderCard();
+  updateSidebar();
+}
+
+function navigate(dir) {
+  if (filteredIndices.length === 0) return;
+  navDirection = dir;
+  currentIndex = Math.max(0, Math.min(filteredIndices.length - 1, currentIndex + dir));
+  currentPvpTab = 'persona_1';
+  renderCard();
+  updateNav();
+}
+
+function updateNav() {
+  document.getElementById('btnPrev').disabled = currentIndex <= 0;
+  document.getElementById('btnNext').disabled = currentIndex >= filteredIndices.length - 1;
+  document.getElementById('topbarCounter').textContent = filteredIndices.length > 0
+    ? `${currentIndex + 1} / ${filteredIndices.length}` : '0 / 0';
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  const action = undoStack.pop();
+  const isEmpty = action.prev.status === 'new' && !action.prev.notes && !action.prev.rating;
+  if (isEmpty) {
+    delete reviewsByKey[action.key];
+    if (reviewsAllReviewers[action.key]) delete reviewsAllReviewers[action.key][currentReviewer];
+  } else {
+    reviewsByKey[action.key] = action.prev;
+  }
+  saveReviewToSupabase(action.key, isEmpty ? { status: 'new', notes: '', rating: 0, reviewed_at: new Date().toISOString() } : action.prev);
+  document.getElementById('undoBtn').disabled = undoStack.length === 0;
+  buildFilteredIndices();
+  if (currentIndex >= filteredIndices.length) currentIndex = Math.max(0, filteredIndices.length - 1);
+  renderCard();
+  updateSidebar();
+  showToast('Ação desfeita', 'blue');
+}
+
+function fmt(n) { if (n == null || n === '') return '--'; const num = Number(n); if (isNaN(num)) return String(n); return num.toLocaleString('pt-BR'); }
+function fmtBRL(n, compact) {
+  if (n == null || n === '') return '--';
+  const num = Number(n);
+  if (isNaN(num)) return String(n);
+  if (compact) {
+    if (num >= 1e9) return 'R$ ' + (num / 1e9).toFixed(1) + 'bi';
+    if (num >= 1e6) return 'R$ ' + (num / 1e6).toFixed(num >= 10e6 ? 0 : 1) + 'M';
+    if (num >= 1e3) return 'R$ ' + (num / 1e3).toFixed(num >= 10e3 ? 0 : 1) + 'k';
+  }
+  return 'R$ ' + num.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+function escapeHtml(str) { if (str == null) return ''; const d = document.createElement('div'); d.textContent = String(str); return d.innerHTML; }
+function initials(str) { if (!str) return '??'; return String(str).split(/\s+/).filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
+
+function statusBadge(status) {
+  const map = { new: ['Novo', 'badge-new'], approved: ['Aprovado', 'badge-approved'], rejected: ['Rejeitado', 'badge-rejected'], maybe: ['Talvez', 'badge-maybe'] };
+  const [label, cls] = map[status] || map.new;
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+function pqsBadge(pqs) {
+  const map = { pqs1: ['PQS-1 · Pagamento Quebrado', 'badge-pqs1'], pqs2: ['PQS-2 · Escala Manual', 'badge-pqs2'], pqs4: ['PQS-4 · Risco Fiscal', 'badge-pqs4'] };
+  const [label, cls] = map[pqs] || ['PQS-?', 'badge-pqs1'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function renderSignalBox(d) {
+  const sd = d.signal_data || {};
+  if (d.pqs === 'pqs1') {
+    const desc = sd.descricao_curta || sd.distress_specific || sd.signal_summary || '';
+    return `
+      <div class="signal-section">
+        <h3>Sinal · Distress financeiro / AP quebrado</h3>
+        <div class="signal-box signal-pqs1">
+          <div class="signal-title">Distress signal documentado</div>
+          <div class="signal-text">${escapeHtml(desc) || 'Sinal de distress identificado em fontes públicas'}</div>
+        </div>
+      </div>`;
+  } else if (d.pqs === 'pqs2') {
+    const vagas = sd.vagas_count || sd.vagas_count_detectadas || '?';
+    const erp = sd.erp_detectado || sd.erp || 'ERP não detectado';
+    return `
+      <div class="signal-section">
+        <h3>Sinal · Escala manual em AP</h3>
+        <div class="signal-box signal-pqs2">
+          <div class="signal-title">${escapeHtml(vagas)} vagas abertas em AP/financeiro/fiscal nos últimos 6 meses</div>
+          <div class="signal-text">ERP detectado: <strong>${escapeHtml(erp)}</strong></div>
+        </div>
+      </div>`;
+  } else if (d.pqs === 'pqs4') {
+    const ncarf = sd.carf_processos || sd.carf_processos_count || '?';
+    const pgfn = sd.pgfn_valor || sd.pgfn_total_pis_cofins || 0;
+    return `
+      <div class="signal-section">
+        <h3>Sinal · Risco fiscal PIS/COFINS</h3>
+        <div class="signal-box signal-pqs4">
+          <div class="signal-title">${escapeHtml(ncarf)} processos CARF refinados (AP-related) · PGFN: ${fmtBRL(pgfn, true)}</div>
+          <div class="signal-text">Tese específica conecta com captura/escrituração de NF-e de entrada. Súmula 231/2025 endureceu glosa de crédito extemporâneo.</div>
+        </div>
+      </div>`;
+  }
+  return '';
+}
+
+function renderDecisores(d) {
+  const decisores = d.decisores || [];
+  if (decisores.length === 0) {
+    return `<div class="decisores-section"><h3>Decisores</h3><div style="padding:14px;background:var(--bg);border:1px solid var(--line-soft);border-radius:var(--radius-sm);font-size:.82rem;color:var(--ink-3)">Nenhum decisor identificado · enriquecer manual no Clay.</div></div>`;
+  }
+  const cards = decisores.slice(0, 3).map((dec, i) => {
+    if (!dec) return '';
+    const persona = dec.persona_label || ['CFO/Decisor', 'Validador', 'Operacional'][i];
+    const validations = dec.validations || {};
+    const passed = dec.triple_check_passed === true;
+    const uncertain = validations.uncertain === true;
+    const valClass = passed ? 'passed' : (uncertain ? 'uncertain' : '');
+    const valIcon = passed ? '✓' : (uncertain ? '⚠' : '•');
+    const valText = passed ? 'Triple-check OK' : (uncertain ? 'Validação incerta' : 'Verificar');
+    const linkedin = dec.linkedin_url || dec.linkedin;
+    const cargo = dec.cargo_exato || dec.cargo;
+    return `
+      <div class="decisor-card ${i===0 ? 'rank1' : ''}">
+        <span class="decisor-rank ${i===0 ? 'r1' : ''}">${escapeHtml(persona)}</span>
+        <div class="decisor-nome">${escapeHtml(dec.nome || '[a enriquecer no Clay]')}</div>
+        <div class="decisor-cargo">${escapeHtml(cargo || '')}</div>
+        <div class="decisor-actions">
+          ${linkedin ? `<a class="decisor-link linkedin" href="${escapeHtml(linkedin)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
+        </div>
+        <div class="decisor-validation ${valClass}">${valIcon} ${valText}</div>
+      </div>`;
+  }).join('');
+  return `<div class="decisores-section"><h3>Decisores · 3 personas (triple-check)</h3><div class="decisores-grid">${cards}</div></div>`;
+}
+
+function renderPVPs(d) {
+  const pvps = d.pvps || {};
+  const personas = ['persona_1', 'persona_2', 'persona_3'];
+  if (!pvps.persona_1) {
+    return `<div class="pvps-section"><h3>PVP</h3><div style="padding:14px;background:var(--bg);border-radius:var(--radius-sm);font-size:.82rem;color:var(--ink-3)">Sem PVP gerado.</div></div>`;
+  }
+  const tabs = personas.map(p => {
+    if (!pvps[p]) return '';
+    const label = pvps[p].persona_label || p;
+    return `<button class="pvp-tab ${currentPvpTab === p ? 'active' : ''}" onclick="setPvpTab('${p}')">${escapeHtml(label)}</button>`;
+  }).join('');
+  const active = pvps[currentPvpTab] || pvps.persona_1;
+  return `
+    <div class="pvps-section">
+      <h3>Mensagem PVP · 3 versões (1 por persona)</h3>
+      <div class="pvp-tabs">${tabs}</div>
+      <div class="pvp-content">
+        <div class="pvp-subject-row">
+          <span class="lbl">Assunto</span>
+          <span class="subject">${escapeHtml(active.assunto || '')}</span>
+        </div>
+        <div class="pvp-body">${escapeHtml(active.corpo || '')}</div>
+        ${active.whatsapp_d5 ? `<div class="pvp-whatsapp"><div class="lbl">WhatsApp follow-up D+5</div><div class="text">${escapeHtml(active.whatsapp_d5)}</div></div>` : ''}
+      </div>
+    </div>`;
+}
+
+function setPvpTab(persona) {
+  currentPvpTab = persona;
+  renderCard();
+}
+
+function renderLeadCard(d, review, realIdx) {
+  const anim = navDirection >= 0 ? '' : ' reverse';
+  const displayName = d.nome_fantasia || d.razao_social || 'Sem nome';
+
+  const chips = [];
+  if (d.website) chips.push(`<a class="chip" href="${escapeHtml(d.website)}" target="_blank">🌐 Website</a>`);
+  if (d.cnpj) chips.push(`<span class="chip">📄 ${escapeHtml(d.cnpj)}</span>`);
+  if (d.ticker_b3) chips.push(`<span class="chip">📈 ${escapeHtml(d.ticker_b3)}</span>`);
+  if (d.setor) chips.push(`<span class="chip">🏷 ${escapeHtml(d.setor)}</span>`);
+  if (d.estados && d.estados.length) chips.push(`<span class="chip">📍 ${escapeHtml(d.estados.slice(0,4).join(' · '))}</span>`);
+  if (d.linkedin_empresa) chips.push(`<a class="chip" href="${escapeHtml(d.linkedin_empresa)}" target="_blank">🔗 LinkedIn empresa</a>`);
+
+  const statsCards = [
+    { val: fmtBRL(d.faturamento_estimado, true), label: 'Faturamento' },
+    { val: d.headcount_estimate ? fmt(d.headcount_estimate) : '--', label: 'Headcount' },
+    { val: d.n_filiais ? fmt(d.n_filiais) : '--', label: 'Filiais' },
+    { val: d.estados && d.estados.length ? d.estados.length : '--', label: 'Estados' }
+  ];
+  const statsHtml = statsCards.map(s => `<div class="stat-card"><div class="stat-val">${s.val}</div><div class="stat-lbl">${s.label}</div></div>`).join('');
+
+  const noticias = d.noticias || [];
+  const noticiasHtml = noticias.length ? `
+    <div class="noticias-section">
+      <h3>Notícias relevantes</h3>
+      ${noticias.slice(0, 3).map(n => `<a class="noticia-chip" href="${escapeHtml(n.url || '#')}" target="_blank">${escapeHtml((n.titulo || n.headline || 'notícia').slice(0, 80))}</a>`).join('')}
+    </div>` : '';
+
+  const pendingLegalBadge = d.pending_legal ? `<span class="badge badge-pending">⚠ Pending Legal</span>` : '';
+
+  return `
+  <div class="card${anim}" id="currentCard">
+    <div class="card-header">
+      <div class="card-header-top">
+        <div class="card-avatar">${initials(displayName)}</div>
+        <div class="card-title-block">
+          <h2 class="card-title">${escapeHtml(displayName)}</h2>
+          <div class="card-subtitle">${escapeHtml(d.razao_social || '')}</div>
+        </div>
+        ${pqsBadge(d.pqs)}
+        ${statusBadge(review.status)}
+        ${pendingLegalBadge}
+      </div>
+    </div>
+    <div class="chips-row">${chips.join('')}</div>
+    <div class="stats-grid">${statsHtml}</div>
+    ${renderSignalBox(d)}
+    ${renderDecisores(d)}
+    ${renderPVPs(d)}
+    ${noticiasHtml}
+    <div class="notes-section">
+      <h3>Observações de ${escapeHtml(currentReviewer || '--')}</h3>
+      <textarea class="notes-textarea" placeholder="Lead bate com a dor? Decisor faz sentido? Mensagem precisa ajustar tom?" data-idx="${realIdx}" oninput="debounceSaveNotes(this)">${escapeHtml(review.notes)}</textarea>
+    </div>
+    <div class="action-buttons">
+      <button class="action-btn btn-approve" onclick="doAction('approved')">✓ Aprovar</button>
+      <button class="action-btn btn-reject" onclick="doAction('rejected')">✗ Rejeitar</button>
+      <button class="action-btn btn-maybe" onclick="doAction('maybe')">~ Talvez</button>
+    </div>
+  </div>`;
+}
+
+function renderCard() {
+  const area = document.getElementById('cardArea');
+  if (!dataLoaded) return;
+  if (filteredIndices.length === 0) {
+    area.innerHTML = `<div class="card-wrapper"><div class="card"><div class="empty-state"><div class="empty-state-icon">🔍</div><h2>Nenhum lead encontrado</h2><p>Ajuste os filtros pra ver mais leads.</p></div></div></div>`;
+    updateNav();
+    return;
+  }
+  const realIdx = filteredIndices[currentIndex];
+  const d = LEADS_RAW[realIdx];
+  const review = getReview(realIdx);
+  const html = renderLeadCard(d, review, realIdx);
+  area.innerHTML = `<div class="card-wrapper">${html}</div>`;
+  updateNav();
+}
+
+function doAction(status) {
+  if (!currentReviewer) return;
+  if (filteredIndices.length === 0) return;
+  const realIdx = filteredIndices[currentIndex];
+  const ta = document.querySelector('.notes-textarea');
+  const notes = ta ? ta.value : getReview(realIdx).notes;
+  const rating = getReview(realIdx).rating;
+  setReview(realIdx, status, notes, rating);
+  const labels = { approved: 'Aprovado', rejected: 'Rejeitado', maybe: 'Talvez' };
+  const colors = { approved: 'green', rejected: 'red', maybe: 'amber' };
+  showToast(labels[status], colors[status]);
+  buildFilteredIndices();
+  if (currentStatusFilter !== 'all' && currentStatusFilter !== status) {
+    if (currentIndex >= filteredIndices.length) currentIndex = Math.max(0, filteredIndices.length - 1);
+  } else {
+    if (currentIndex < filteredIndices.length - 1) { navDirection = 1; currentIndex++; }
+  }
+  currentPvpTab = 'persona_1';
+  renderCard();
+  updateSidebar();
+  updateReviewerTabCounts();
+}
+
+function debounceSaveNotes(el) {
+  clearTimeout(notesSaveTimer);
+  notesSaveTimer = setTimeout(() => {
+    const idx = parseInt(el.dataset.idx);
+    const key = getItemKey(LEADS_RAW[idx]);
+    if (!reviewsByKey[key]) reviewsByKey[key] = { status: 'new', notes: '', rating: 0, reviewed_at: new Date().toISOString() };
+    reviewsByKey[key].notes = el.value;
+    reviewsByKey[key].reviewed_at = new Date().toISOString();
+    saveReviewToSupabase(key, reviewsByKey[key]);
+  }, 500);
+}
+
+function updateSidebar() {
+  let counts = { new: 0, approved: 0, rejected: 0, maybe: 0 };
+  let pqsCounts = { all: 0, pqs1: 0, pqs2: 0, pqs4: 0 };
+  for (let i = 0; i < LEADS_RAW.length; i++) {
+    const lead = LEADS_RAW[i];
+    pqsCounts.all++;
+    if (lead.pqs) pqsCounts[lead.pqs] = (pqsCounts[lead.pqs] || 0) + 1;
+    if (currentPqsFilter !== 'all' && lead.pqs !== currentPqsFilter) continue;
+    const key = getItemKey(lead);
+    const s = (reviewsByKey[key] || { status: 'new' }).status;
+    counts[s] = (counts[s] || 0) + 1;
+  }
+  const total = counts.new + counts.approved + counts.rejected + counts.maybe;
+  const reviewed = total - counts.new;
+  const pct = total > 0 ? Math.round((reviewed / total) * 100) : 0;
+  document.getElementById('filterCountAll').textContent = total;
+  document.getElementById('filterCountNew').textContent = counts.new;
+  document.getElementById('filterCountApproved').textContent = counts.approved;
+  document.getElementById('filterCountRejected').textContent = counts.rejected;
+  document.getElementById('filterCountMaybe').textContent = counts.maybe;
+  document.getElementById('pqsCountAll').textContent = pqsCounts.all;
+  document.getElementById('pqsCountP1').textContent = pqsCounts.pqs1 || 0;
+  document.getElementById('pqsCountP2').textContent = pqsCounts.pqs2 || 0;
+  document.getElementById('pqsCountP4').textContent = pqsCounts.pqs4 || 0;
+  document.getElementById('statApproved').textContent = counts.approved;
+  document.getElementById('statRejected').textContent = counts.rejected;
+  document.getElementById('statMaybe').textContent = counts.maybe;
+  const circ = 2 * Math.PI * 42;
+  document.getElementById('progressRing').style.strokeDashoffset = circ - (pct / 100) * circ;
+  document.getElementById('progressText').textContent = pct + '%';
+}
+
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + color + ' show';
+  setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+function exportCSV() {
+  if (LEADS_RAW.length === 0) return;
+  const rows = [['lead_id', 'cnpj', 'razao_social', 'ticker_b3', 'pqs', 'status', 'notes', 'decisor_1_nome', 'decisor_1_linkedin', 'reviewer', 'reviewed_at']];
+  for (let i = 0; i < LEADS_RAW.length; i++) {
+    const d = LEADS_RAW[i];
+    const key = getItemKey(d);
+    const r = reviewsByKey[key] || { status: 'new', notes: '', reviewed_at: '' };
+    const d1 = (d.decisores || [])[0] || {};
+    const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""').replace(/\n/g, ' ')}"`;
+    rows.push([esc(d.lead_id), esc(d.cnpj), esc(d.razao_social), esc(d.ticker_b3 || ''), esc(d.pqs), r.status, esc(r.notes), esc(d1.nome || ''), esc(d1.linkedin_url || d1.linkedin || ''), esc(currentReviewer), r.reviewed_at]);
+  }
+  const csv = '﻿' + rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `v360_qa_${currentReviewer || 'reviewer'}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exportado', 'blue');
+}
+
+function exportJSON() {
+  if (LEADS_RAW.length === 0) return;
+  const dump = LEADS_RAW.map(d => ({ ...d, reviews: reviewsAllReviewers[getItemKey(d)] || {} }));
+  const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `v360_qa_full_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('JSON exportado', 'blue');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+    if (e.key === 'Escape') e.target.blur();
+    return;
+  }
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z')) { e.preventDefault(); undo(); return; }
+  if (e.key === 'Shift' && !e.repeat) { e.preventDefault(); doAction('maybe'); return; }
+  switch (e.key) {
+    case 'ArrowLeft': e.preventDefault(); navigate(-1); break;
+    case 'ArrowRight': e.preventDefault(); navigate(1); break;
+    case 'ArrowUp': e.preventDefault(); doAction('approved'); break;
+    case 'ArrowDown': e.preventDefault(); doAction('rejected'); break;
+  }
+});
+
+async function init() {
+  const saved = getReviewer() || 'Thali';
+  currentReviewer = saved;
+  localStorage.setItem('v360_qa_reviewer', saved);
+  document.getElementById('tabThali').classList.toggle('active', saved === 'Thali');
+  document.getElementById('tabAnaLu').classList.toggle('active', saved === 'Ana Lu');
+  try {
+    await loadLeadsFromSupabase();
+    await loadReviewsFromSupabase();
+    dataLoaded = true;
+    buildFilteredIndices();
+    renderCard();
+    updateSidebar();
+    updateReviewerTabCounts();
+    showToast(`${LEADS_RAW.length} leads carregados`, 'blue');
+  } catch (e) {
+    console.error('Init error:', e);
+    document.getElementById('cardArea').innerHTML = `<div class="card-wrapper"><div class="card"><div class="empty-state"><div class="empty-state-icon">⚠</div><h2>Erro ao carregar</h2><p>${escapeHtml(e.message)}</p></div></div></div>`;
+  }
+}
+init();
+</script>
+</body>
+</html>
