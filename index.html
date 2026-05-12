@@ -788,7 +788,7 @@ function renderPVPs(d) {
           <span class="lbl">Assunto</span>
           <span class="subject">${escapeHtml(active.assunto || '')}</span>
         </div>
-        <div class="pvp-body">${escapeHtml(active.corpo || '')}</div>
+        <div class="pvp-body">${escapeHtml((active.corpo || '').replace('[SIGNATURE]', currentReviewer || 'Thali'))}</div>
         ${active.whatsapp_d5 ? `<div class="pvp-whatsapp"><div class="lbl">WhatsApp follow-up D+5</div><div class="text">${escapeHtml(active.whatsapp_d5)}</div></div>` : ''}
       </div>
     </div>`;
