@@ -50,7 +50,8 @@ h1,h2,h3,h4{font-family:var(--font-h);color:var(--ink)}
 .sidebar{width:280px;min-width:280px;background:var(--sidebar-bg);color:#E2DBEC;display:flex;flex-direction:column;padding:0;height:100vh;overflow-y:auto;z-index:10}
 .sidebar-header{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
 .brand-row{display:flex;align-items:center;gap:10px}
-.brand-mark{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-h);font-weight:700;font-size:1rem}
+.brand-mark{width:40px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand-mark svg{width:40px;height:40px;display:block}
 .sidebar-header h1{font-size:1.2rem;font-weight:700;letter-spacing:-.02em;color:#fff}
 .sidebar-header h1 .accent{color:var(--accent)}
 .sidebar-header p{font-size:.72rem;color:rgba(255,255,255,.55);margin-top:4px;letter-spacing:.05em;text-transform:uppercase}
@@ -241,10 +242,23 @@ a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
 <aside class="sidebar">
   <div class="sidebar-header">
     <div class="brand-row">
-      <div class="brand-mark">V</div>
+      <div class="brand-mark" aria-label="V360 logo">
+        <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+          <!-- anel laranja externo com gap superior -->
+          <circle cx="32" cy="32" r="28" fill="none" stroke="#FF5C13" stroke-width="5"
+                  stroke-linecap="round" stroke-dasharray="135 41"
+                  transform="rotate(110 32 32)"/>
+          <!-- símbolo √ (radical) -->
+          <path d="M14 30 L19 35 L26 22 L30 22" fill="none" stroke="#FFFFFF" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- 360 texto -->
+          <text x="42" y="38" font-family="Ubuntu, sans-serif" font-weight="700" font-size="16"
+                fill="#FFFFFF" text-anchor="middle">360</text>
+        </svg>
+      </div>
       <h1>V360 · <span class="accent">QA</span></h1>
     </div>
-    <p>Piloto Wave 1 · 58 leads</p>
+    <p>Piloto Wave 1 · 49 leads</p>
     <div class="reviewer-tabs" role="tablist" aria-label="Revisor">
       <button class="reviewer-tab" id="tabThali" onclick="setReviewer('Thali')">
         <span>Thali</span>
@@ -663,18 +677,25 @@ function renderDecisores(d) {
     const valText = passed ? 'Triple-check OK' : (uncertain ? 'Validação incerta' : 'Verificar');
     const linkedin = dec.linkedin_url || dec.linkedin;
     const cargo = dec.cargo_exato || dec.cargo;
+    const email = dec.email || '';
+    const confidence = dec.confidence || '';
+    const confColor = confidence === 'HIGH' ? 'var(--ok)' : (confidence === 'MEDIUM' ? 'var(--amber)' : (confidence === 'LOW' ? 'var(--danger)' : 'var(--ink-3)'));
     return `
       <div class="decisor-card ${i===0 ? 'rank1' : ''}">
         <span class="decisor-rank ${i===0 ? 'r1' : ''}">${escapeHtml(persona)}</span>
         <div class="decisor-nome">${escapeHtml(dec.nome || '[a enriquecer no Clay]')}</div>
         <div class="decisor-cargo">${escapeHtml(cargo || '')}</div>
         <div class="decisor-actions">
-          ${linkedin ? `<a class="decisor-link linkedin" href="${escapeHtml(linkedin)}" target="_blank" rel="noopener">LinkedIn</a>` : ''}
+          ${linkedin ? `<a class="decisor-link linkedin" href="${escapeHtml(linkedin)}" target="_blank" rel="noopener" title="LinkedIn">in</a>` : ''}
+          ${email ? `<a class="decisor-link email" href="mailto:${escapeHtml(email)}" title="${escapeHtml(email)}" style="background:#FFF1E8;color:#C44508;border-color:#FBD0B5">✉ ${escapeHtml(email.split('@')[0].slice(0,12))}</a>` : ''}
         </div>
-        <div class="decisor-validation ${valClass}">${valIcon} ${valText}</div>
+        <div class="decisor-validation ${valClass}" style="display:flex;align-items:center;gap:6px">
+          ${confidence ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${confColor}"></span><span>${escapeHtml(confidence)}</span><span style="color:var(--ink-3)">·</span>` : ''}
+          <span>${valIcon} ${valText}</span>
+        </div>
       </div>`;
   }).join('');
-  return `<div class="decisores-section"><h3>Decisores · 3 personas (triple-check)</h3><div class="decisores-grid">${cards}</div></div>`;
+  return `<div class="decisores-section"><h3>Decisores · validados via Exa Answer (current employment)</h3><div class="decisores-grid">${cards}</div></div>`;
 }
 
 function renderPVPs(d) {
@@ -691,7 +712,7 @@ function renderPVPs(d) {
   const active = pvps[currentPvpTab] || pvps.persona_1;
   return `
     <div class="pvps-section">
-      <h3>Mensagem PVP · 3 versões (1 por persona)</h3>
+      <h3>Mensagem · dor segmentada → proposta de valor (3 personas)</h3>
       <div class="pvp-tabs">${tabs}</div>
       <div class="pvp-content">
         <div class="pvp-subject-row">
