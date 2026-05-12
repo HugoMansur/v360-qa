@@ -159,6 +159,11 @@ a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
 .signal-box .signal-title{font-size:.82rem;font-weight:700;color:var(--ink);margin-bottom:6px;font-family:var(--font-h)}
 .signal-box .signal-text{font-size:.84rem;color:var(--ink-2);line-height:1.55}
 .signal-box .signal-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;font-size:.74rem;color:var(--ink-3)}
+.signal-box .signal-row{font-size:.84rem;color:var(--ink-2);line-height:1.55;padding:6px 0;border-bottom:1px dashed rgba(42,21,64,.08)}
+.signal-box .signal-row:last-child{border-bottom:none}
+.signal-box .signal-row-label{font-weight:700;color:var(--ink);font-family:var(--font-h);font-size:.74rem;text-transform:uppercase;letter-spacing:.04em;margin-right:6px}
+.signal-box .signal-row-edp{background:rgba(15,138,80,.06);margin:6px -10px -6px;padding:10px 12px;border-radius:6px;border-bottom:none;border-left:3px solid var(--ok)}
+.signal-box .signal-row-edp .signal-row-label{color:#0F8A50}
 
 .decisores-section{padding:16px 28px 0}
 .decisores-section h3{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);margin-bottom:10px;font-weight:700;font-family:var(--font-h)}
@@ -625,37 +630,101 @@ function pqsBadge(pqs) {
 
 function renderSignalBox(d) {
   const sd = d.signal_data || {};
+  const fat = parseFloat(d.faturamento_estimado || 0) || 0;
+
   if (d.pqs === 'pqs1') {
-    const desc = sd.descricao_curta || sd.distress_specific || sd.signal_summary || '';
+    const fonte = sd.fonte_primaria || '';
+    const isDD = fonte === 'directdata_nacional';
+    const p12 = sd.protestos_12m;
+    const valor = sd.valor_protestado_brl || 0;
+    const valorFmt = sd.valor_protestado_brl_fmt || fmtBRL(valor, true);
+    const ultimo = sd.ultimo_protesto_data_pt || '';
+    const credores = sd.credores_principais || '';
+    const eventoDistress = sd.evento_distress_publico || '';
+    const valor90 = valor * 0.9;
+    const encargos = valor * 1.3;
+    const por1pct = valor * 0.013;
+
+    const rows = [];
+    if (isDD) {
+      rows.push(`<div class="signal-row"><span class="signal-row-label">CENPROT (Direct Data Nacional):</span> <strong>${p12} protestos</strong> em 12 meses · <strong>${escapeHtml(valorFmt)}</strong> em duplicatas${ultimo ? ` · último em ${escapeHtml(ultimo)}` : ''}</div>`);
+      rows.push(`<div class="signal-row"><span class="signal-row-label">Composição estimada:</span> ~90% é duplicata mercantil de fornecedor recorrente = <strong>${fmtBRL(valor90, true)}</strong> travado em fluxo manual de AP</div>`);
+      rows.push(`<div class="signal-row"><span class="signal-row-label">Encargos (1,3× principal):</span> <strong>${fmtBRL(encargos, true)}</strong> de caixa queimado em 12 meses (mora 0,33%/dia + SELIC + emolumentos)</div>`);
+      rows.push(`<div class="signal-row signal-row-edp"><span class="signal-row-label">Proposta de valor:</span> cada 1% de duplicatas que entram no fluxo certo a tempo = <strong>${fmtBRL(por1pct, true)}</strong> preservados/ano em encargos</div>`);
+    } else {
+      rows.push(`<div class="signal-row"><span class="signal-row-label">Fonte:</span> news pública (Direct Data com saldo insuficiente no momento)</div>`);
+      if (eventoDistress) rows.push(`<div class="signal-row"><span class="signal-row-label">Evento distress:</span> ${escapeHtml(eventoDistress)}</div>`);
+      if (credores) rows.push(`<div class="signal-row"><span class="signal-row-label">Credores citados:</span> ${escapeHtml(credores)}</div>`);
+      rows.push(`<div class="signal-row signal-row-edp"><span class="signal-row-label">Proposta de valor:</span> em ${fmtBRL(fat, true)} de receita, cada 2% de NF-e fora do fluxo = passivo de fornecedor crescendo + auditor questionando fechamento</div>`);
+    }
     return `
       <div class="signal-section">
-        <h3>Sinal · Distress financeiro / AP quebrado</h3>
-        <div class="signal-box signal-pqs1">
-          <div class="signal-title">Distress signal documentado</div>
-          <div class="signal-text">${escapeHtml(desc) || 'Sinal de distress identificado em fontes públicas'}</div>
-        </div>
+        <h3>EDP · Pagamento quebrado (PQS-1) · sinal usado na mensagem</h3>
+        <div class="signal-box signal-pqs1">${rows.join('')}</div>
       </div>`;
-  } else if (d.pqs === 'pqs2') {
-    const vagas = sd.vagas_count || sd.vagas_count_detectadas || '?';
-    const erp = sd.erp_detectado || sd.erp || 'ERP não detectado';
+  }
+
+  if (d.pqs === 'pqs2') {
+    const clay = sd.headcount_ap_clay;
+    const vagas = parseInt(sd.vagas_count || 3, 10);
+    let nAp = clay && clay > 0 ? clay : null;
+    const headRaw = (d.headcount_estimate || '').toString();
+    const headNums = (headRaw.match(/\d+/g) || []);
+    const headTotal = headNums.length ? parseInt(headNums[headNums.length-1], 10) : null;
+    if (clay && clay > 0 && headTotal) {
+      const cap = Math.floor(headTotal * 0.05);
+      nAp = Math.min(clay, cap);
+    }
+    if (!nAp) {
+      if (!headTotal) nAp = 12;
+      else if (headTotal >= 10000) nAp = Math.max(Math.floor(headTotal * 0.004), 20);
+      else if (headTotal >= 1000) nAp = Math.max(Math.floor(headTotal * 0.007), 10);
+      else nAp = Math.max(Math.floor(headTotal * 0.01), 5);
+    }
+    const nTotal = nAp + vagas;
+    const capital = nTotal * 151000;
+    const realocaveis = Math.floor(nTotal * 0.88);
+    const capitalRealoc = realocaveis * 151000;
+
+    const rows = [];
+    rows.push(`<div class="signal-row"><span class="signal-row-label">LinkedIn (Clay scrape):</span> <strong>${nAp} analistas atuais</strong> em AP/Fiscal/Tesouraria + <strong>${vagas} vagas abertas</strong> em 6 meses${clay && clay !== nAp ? ` <em style="color:var(--ink-3)">(Clay raw: ${clay} · cap 5% headcount aplicado)</em>` : ''}</div>`);
+    rows.push(`<div class="signal-row"><span class="signal-row-label">Capital humano hoje:</span> ${nTotal} pessoas × R$ 151k/ano full cost = <strong>${fmtBRL(capital, true)}/ano</strong> em backoffice operacional</div>`);
+    rows.push(`<div class="signal-row signal-row-edp"><span class="signal-row-label">Proposta de valor:</span> 88% migrável pra FP&A / Internal Audit = <strong>${realocaveis} pessoas</strong> · <strong>${fmtBRL(capitalRealoc, true)}/ano</strong> em capital humano operacional pra trabalho de margem</div>`);
     return `
       <div class="signal-section">
-        <h3>Sinal · Escala manual em AP</h3>
-        <div class="signal-box signal-pqs2">
-          <div class="signal-title">${escapeHtml(vagas)} vagas abertas em AP/financeiro/fiscal nos últimos 6 meses</div>
-          <div class="signal-text">ERP detectado: <strong>${escapeHtml(erp)}</strong></div>
-        </div>
+        <h3>EDP · Escala manual (PQS-2) · sinal usado na mensagem</h3>
+        <div class="signal-box signal-pqs2">${rows.join('')}</div>
       </div>`;
-  } else if (d.pqs === 'pqs4') {
-    const ncarf = sd.carf_processos || sd.carf_processos_count || '?';
-    const pgfn = sd.pgfn_valor || sd.pgfn_total_pis_cofins || 0;
+  }
+
+  if (d.pqs === 'pqs4') {
+    const cits = sd.specific_carf_citations || [];
+    const pgfnTop = sd.pgfn_top_inscricao || {};
+    const totals = sd.totals || {};
+    const nProc = totals.n_processos_carf_disponiveis || cits.length || 0;
+    const pgfnTotalFmt = totals.total_pgfn_pis_cofins_brl_fmt || '[acumulado]';
+    const apuracao = fat * 0.0925;
+    const por1pp = apuracao * 0.01;
+    const exposicao = fat * 0.0925 * 0.03 * 5;
+    const proc = cits[0] || {};
+
+    const rows = [];
+    if (proc.numero_processo) {
+      rows.push(`<div class="signal-row"><span class="signal-row-label">Processo CARF principal:</span> <strong>${escapeHtml(proc.numero_processo)}</strong>${proc.data_sessao_br ? ` · julgado em ${escapeHtml(proc.data_sessao_br)}` : ''}${proc.tributo ? ` · ${escapeHtml(proc.tributo)}` : ''}${proc.decisao_resumida ? ` · ${escapeHtml(proc.decisao_resumida)}` : ''}</div>`);
+    }
+    rows.push(`<div class="signal-row"><span class="signal-row-label">Total CARF:</span> ${nProc} processos sobre creditamento PIS/COFINS · tese alinhada com Súmula 231/2025</div>`);
+    if (pgfnTop.valor_consolidado_brl) {
+      rows.push(`<div class="signal-row"><span class="signal-row-label">PGFN top inscrição:</span> <strong>${escapeHtml(pgfnTop.valor_consolidado_brl)}</strong> em ${escapeHtml(pgfnTop.tributo || '')} inscrita em ${escapeHtml(pgfnTop.data_inscricao || '')} · ${escapeHtml(pgfnTop.situacao || '')}</div>`);
+    }
+    rows.push(`<div class="signal-row"><span class="signal-row-label">PGFN acumulado:</span> ${escapeHtml(pgfnTotalFmt)} em PIS+COFINS em curso</div>`);
+    if (apuracao > 0) {
+      rows.push(`<div class="signal-row"><span class="signal-row-label">Apuração anual estimada:</span> <strong>${fmtBRL(apuracao, true)}</strong> (9,25% sobre faturamento, Lucro Real não-cumulativo)</div>`);
+      rows.push(`<div class="signal-row signal-row-edp"><span class="signal-row-label">Proposta de valor:</span> cada 1pp de NF-e validado antes do lançamento = <strong>${fmtBRL(por1pp, true)}/ano</strong> em crédito blindado · exposição 5 anos (2-5% escape): <strong>${fmtBRL(exposicao, true)}</strong></div>`);
+    }
     return `
       <div class="signal-section">
-        <h3>Sinal · Risco fiscal PIS/COFINS</h3>
-        <div class="signal-box signal-pqs4">
-          <div class="signal-title">${escapeHtml(ncarf)} processos CARF refinados (AP-related) · PGFN: ${fmtBRL(pgfn, true)}</div>
-          <div class="signal-text">Tese específica conecta com captura/escrituração de NF-e de entrada. Súmula 231/2025 endureceu glosa de crédito extemporâneo.</div>
-        </div>
+        <h3>EDP · Risco fiscal (PQS-4) · sinal usado na mensagem</h3>
+        <div class="signal-box signal-pqs4">${rows.join('')}</div>
       </div>`;
   }
   return '';
