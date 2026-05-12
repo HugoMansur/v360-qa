@@ -357,6 +357,7 @@ a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
   <div class="export-section">
     <button class="export-btn primary" onclick="exportCSV()">Export CSV</button>
     <button class="export-btn secondary" onclick="exportJSON()">Export JSON (todos revisores)</button>
+    <button class="export-btn danger" onclick="clearAllReviews()" style="margin-top:8px;background:rgba(196,64,64,.15);color:#FCA5A5">↺ Apagar todas as minhas revisões</button>
   </div>
 </aside>
 
@@ -437,6 +438,38 @@ function setReviewer(name) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
   if (dataLoaded) { buildFilteredIndices(); renderCard(); updateSidebar(); updateReviewerTabCounts(); }
   showToast(`Validando como ${name}`, 'blue');
+}
+
+async function clearAllReviews() {
+  if (!currentReviewer) { showToast('Selecione um revisor primeiro', 'red'); return; }
+  const reviewedKeys = Object.keys(reviewsByKey).filter(k => reviewsByKey[k] && reviewsByKey[k].status && reviewsByKey[k].status !== 'new');
+  if (reviewedKeys.length === 0) { showToast('Nenhuma revisão pra apagar', 'blue'); return; }
+  const confirmed = confirm(`Apagar TODAS as ${reviewedKeys.length} revisões de ${currentReviewer}?\n\nIsso vai zerar aprovados, rejeitados, talvez e observações. Não dá pra desfazer.`);
+  if (!confirmed) return;
+  setSyncStatus('syncing');
+  let removed = 0;
+  for (const key of reviewedKeys) {
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/${TABLE_REVIEWS}?lead_id=eq.${encodeURIComponent(key)}&reviewer_name=eq.${encodeURIComponent(currentReviewer)}`;
+      const res = await fetch(url, { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } });
+      if (res.ok) {
+        delete reviewsByKey[key];
+        if (reviewsAllReviewers[key]) delete reviewsAllReviewers[key][currentReviewer];
+        removed++;
+      }
+    } catch (e) { console.error('Delete failed:', key, e); }
+  }
+  undoStack = [];
+  document.getElementById('undoBtn').disabled = true;
+  currentIndex = 0;
+  currentStatusFilter = 'all';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
+  buildFilteredIndices();
+  renderCard();
+  updateSidebar();
+  updateReviewerTabCounts();
+  setSyncStatus('synced');
+  showToast(`${removed} revisões apagadas`, 'green');
 }
 
 function copyToClipboard(text, el) {
