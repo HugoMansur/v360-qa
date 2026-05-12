@@ -179,6 +179,11 @@ a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
 .decisor-link:hover{background:var(--accent-soft);color:var(--accent-dark);border-color:var(--accent)}
 .decisor-link.linkedin{background:#0A66C2;color:#fff;border-color:#0A66C2}
 .decisor-link.linkedin:hover{background:#084B94}
+.decisor-email-row{display:inline-flex;align-items:center;gap:4px;background:#FFF1E8;border:1px solid #FBD0B5;border-radius:6px;padding:3px 6px 3px 8px;max-width:100%;overflow:hidden}
+.decisor-email-text{font-size:.7rem;color:#9A2A12;font-family:'Inter',monospace;user-select:all;cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px}
+.decisor-email-copy{background:transparent;border:none;color:#C44508;cursor:pointer;font-size:.85rem;padding:0 2px;line-height:1;border-radius:3px}
+.decisor-email-copy:hover{background:#FBD0B5}
+.decisor-email-copy.copied{color:var(--ok)}
 .decisor-validation{font-size:.65rem;color:var(--ink-3);margin-top:auto}
 .decisor-validation.uncertain{color:var(--amber)}
 .decisor-validation.passed{color:var(--ok)}
@@ -218,6 +223,8 @@ a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
 .btn-reject:hover{background:#A23535;box-shadow:0 4px 12px rgba(196,64,64,.3)}
 .btn-maybe{background:var(--amber);color:#fff}
 .btn-maybe:hover{background:#D88806;box-shadow:0 4px 12px rgba(245,158,11,.3)}
+.btn-clear{background:#fff;color:var(--ink-2);border:1px solid var(--line);flex:0.7}
+.btn-clear:hover{background:var(--bg);border-color:var(--ink-3);box-shadow:0 4px 12px rgba(42,21,64,.1)}
 
 .empty-state,.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center}
 .empty-state-icon{font-size:3rem;margin-bottom:16px;opacity:.3}
@@ -422,8 +429,25 @@ function setReviewer(name) {
   document.getElementById('tabThali').classList.toggle('active', name === 'Thali');
   document.getElementById('tabAnaLu').classList.toggle('active', name === 'Ana Lu');
   rebuildReviewsForCurrentReviewer();
+  // Reset filtros pra evitar empty state ao trocar reviewer
+  currentStatusFilter = 'all';
+  currentIndex = 0;
+  currentPvpTab = 'persona_1';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === 'all'));
   if (dataLoaded) { buildFilteredIndices(); renderCard(); updateSidebar(); updateReviewerTabCounts(); }
   showToast(`Validando como ${name}`, 'blue');
+}
+
+function copyToClipboard(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    if (btn) {
+      const orig = btn.textContent;
+      btn.textContent = '✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+    }
+    showToast('Email copiado', 'blue');
+  }).catch(() => showToast('Erro ao copiar', 'red'));
 }
 function rebuildReviewsForCurrentReviewer() {
   reviewsByKey = {};
@@ -756,7 +780,7 @@ function renderDecisores(d) {
         <div class="decisor-cargo">${escapeHtml(cargo || '')}</div>
         <div class="decisor-actions">
           ${linkedin ? `<a class="decisor-link linkedin" href="${escapeHtml(linkedin)}" target="_blank" rel="noopener" title="LinkedIn">in</a>` : ''}
-          ${email ? `<a class="decisor-link email" href="mailto:${escapeHtml(email)}" title="${escapeHtml(email)}" style="background:#FFF1E8;color:#C44508;border-color:#FBD0B5">✉ ${escapeHtml(email.split('@')[0].slice(0,12))}</a>` : ''}
+          ${email ? `<span class="decisor-email-row"><span class="decisor-email-text" title="Selecione e copie">${escapeHtml(email)}</span><button class="decisor-email-copy" onclick="copyToClipboard('${escapeHtml(email)}', this)" title="Copiar email">⧉</button></span>` : ''}
         </div>
         <div class="decisor-validation ${valClass}" style="display:flex;align-items:center;gap:6px">
           ${confidence ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${confColor}"></span><span>${escapeHtml(confidence)}</span><span style="color:var(--ink-3)">·</span>` : ''}
@@ -856,6 +880,7 @@ function renderLeadCard(d, review, realIdx) {
       <button class="action-btn btn-approve" onclick="doAction('approved')">✓ Aprovar</button>
       <button class="action-btn btn-reject" onclick="doAction('rejected')">✗ Rejeitar</button>
       <button class="action-btn btn-maybe" onclick="doAction('maybe')">~ Talvez</button>
+      <button class="action-btn btn-clear" onclick="doAction('new')" title="Voltar pra pendente / limpar revisão">↺ Limpar</button>
     </div>
   </div>`;
 }
