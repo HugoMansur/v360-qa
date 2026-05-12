@@ -179,11 +179,12 @@ a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
 .decisor-link:hover{background:var(--accent-soft);color:var(--accent-dark);border-color:var(--accent)}
 .decisor-link.linkedin{background:#0A66C2;color:#fff;border-color:#0A66C2}
 .decisor-link.linkedin:hover{background:#084B94}
-.decisor-email-row{display:inline-flex;align-items:center;gap:4px;background:#FFF1E8;border:1px solid #FBD0B5;border-radius:6px;padding:3px 6px 3px 8px;max-width:100%;overflow:hidden}
-.decisor-email-text{font-size:.7rem;color:#9A2A12;font-family:'Inter',monospace;user-select:all;cursor:text;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px}
-.decisor-email-copy{background:transparent;border:none;color:#C44508;cursor:pointer;font-size:.85rem;padding:0 2px;line-height:1;border-radius:3px}
-.decisor-email-copy:hover{background:#FBD0B5}
-.decisor-email-copy.copied{color:var(--ok)}
+.decisor-email-block{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#FFF1E8;border:1px solid #FBD0B5;border-radius:6px;padding:6px 10px;cursor:pointer;transition:var(--transition);width:100%;user-select:all}
+.decisor-email-block:hover{background:#FFE2CB;border-color:var(--accent)}
+.decisor-email-block.copied{background:#E6F4EC;border-color:var(--ok)}
+.decisor-email-block.copied .decisor-email-copy-hint{color:var(--ok)}
+.decisor-email-text{font-size:.75rem;color:#9A2A12;font-family:'Inter',monospace;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;user-select:all}
+.decisor-email-copy-hint{font-size:.62rem;color:#C44508;text-transform:uppercase;letter-spacing:.06em;font-weight:700;font-family:var(--font-h);flex-shrink:0}
 .decisor-validation{font-size:.65rem;color:var(--ink-3);margin-top:auto}
 .decisor-validation.uncertain{color:var(--amber)}
 .decisor-validation.passed{color:var(--ok)}
@@ -438,13 +439,17 @@ function setReviewer(name) {
   showToast(`Validando como ${name}`, 'blue');
 }
 
-function copyToClipboard(text, btn) {
+function copyToClipboard(text, el) {
   navigator.clipboard.writeText(text).then(() => {
-    if (btn) {
-      const orig = btn.textContent;
-      btn.textContent = '✓';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 1500);
+    if (el) {
+      const hint = el.querySelector('.decisor-email-copy-hint');
+      const origHint = hint ? hint.textContent : '';
+      if (hint) hint.textContent = 'copiado ✓';
+      el.classList.add('copied');
+      setTimeout(() => {
+        el.classList.remove('copied');
+        if (hint) hint.textContent = origHint;
+      }, 1500);
     }
     showToast('Email copiado', 'blue');
   }).catch(() => showToast('Erro ao copiar', 'red'));
@@ -778,9 +783,13 @@ function renderDecisores(d) {
         <span class="decisor-rank ${i===0 ? 'r1' : ''}">${escapeHtml(persona)}</span>
         <div class="decisor-nome">${escapeHtml(dec.nome || '[a enriquecer no Clay]')}</div>
         <div class="decisor-cargo">${escapeHtml(cargo || '')}</div>
+        ${email ? `
+          <div class="decisor-email-block" onclick="copyToClipboard('${escapeHtml(email)}', this)" title="Clique pra copiar">
+            <span class="decisor-email-text">${escapeHtml(email)}</span>
+            <span class="decisor-email-copy-hint">copiar ⧉</span>
+          </div>` : ''}
         <div class="decisor-actions">
           ${linkedin ? `<a class="decisor-link linkedin" href="${escapeHtml(linkedin)}" target="_blank" rel="noopener" title="LinkedIn">in</a>` : ''}
-          ${email ? `<span class="decisor-email-row"><span class="decisor-email-text" title="Selecione e copie">${escapeHtml(email)}</span><button class="decisor-email-copy" onclick="copyToClipboard('${escapeHtml(email)}', this)" title="Copiar email">⧉</button></span>` : ''}
         </div>
         <div class="decisor-validation ${valClass}" style="display:flex;align-items:center;gap:6px">
           ${confidence ? `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${confColor}"></span><span>${escapeHtml(confidence)}</span><span style="color:var(--ink-3)">·</span>` : ''}
