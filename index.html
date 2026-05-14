@@ -273,12 +273,12 @@ a.chip:hover{background:var(--accent-soft);color:var(--accent-dark)}
     </div>
     <p>Piloto Wave 1 · 49 leads</p>
     <div class="reviewer-tabs" role="tablist" aria-label="Revisor">
-      <button class="reviewer-tab" id="tabThali" onclick="setReviewer('Thali')">
-        <span>Thali</span>
-        <span class="tab-count" id="countThali">0</span>
+      <button class="reviewer-tab" id="tabTalita" onclick="setReviewer('Talita')">
+        <span>Talita</span>
+        <span class="tab-count" id="countTalita">0</span>
       </button>
-      <button class="reviewer-tab" id="tabAnaLu" onclick="setReviewer('Ana Lu')">
-        <span>Ana Lu</span>
+      <button class="reviewer-tab" id="tabAnaLu" onclick="setReviewer('Ana')">
+        <span>Ana</span>
         <span class="tab-count" id="countAnaLu">0</span>
       </button>
     </div>
@@ -428,8 +428,8 @@ function getReviewer() { return localStorage.getItem('v360_qa_reviewer'); }
 function setReviewer(name) {
   localStorage.setItem('v360_qa_reviewer', name);
   currentReviewer = name;
-  document.getElementById('tabThali').classList.toggle('active', name === 'Thali');
-  document.getElementById('tabAnaLu').classList.toggle('active', name === 'Ana Lu');
+  document.getElementById('tabTalita').classList.toggle('active', name === 'Talita');
+  document.getElementById('tabAnaLu').classList.toggle('active', name === 'Ana');
   rebuildReviewsForCurrentReviewer();
   // Reset filtros pra evitar empty state ao trocar reviewer
   currentStatusFilter = 'all';
@@ -495,16 +495,16 @@ function rebuildReviewsForCurrentReviewer() {
   });
 }
 function updateReviewerTabCounts() {
-  const counts = { Thali: 0, 'Ana Lu': 0 };
+  const counts = { Talita: 0, 'Ana': 0 };
   Object.keys(reviewsAllReviewers).forEach(leadId => {
-    ['Thali', 'Ana Lu'].forEach(name => {
+    ['Talita', 'Ana'].forEach(name => {
       const r = (reviewsAllReviewers[leadId] || {})[name];
       if (r && r.status && r.status !== 'new') counts[name]++;
     });
   });
   const total = LEADS_RAW.length || 0;
-  document.getElementById('countThali').textContent = total ? `${counts.Thali}/${total}` : counts.Thali;
-  document.getElementById('countAnaLu').textContent = total ? `${counts['Ana Lu']}/${total}` : counts['Ana Lu'];
+  document.getElementById('countTalita').textContent = total ? `${counts.Talita}/${total}` : counts.Talita;
+  document.getElementById('countAnaLu').textContent = total ? `${counts['Ana']}/${total}` : counts['Ana'];
 }
 
 function getItemKey(item) { return item.lead_id || ''; }
@@ -854,7 +854,7 @@ function renderPVPs(d) {
           <span class="lbl">Assunto</span>
           <span class="subject">${escapeHtml(active.assunto || '')}</span>
         </div>
-        <div class="pvp-body">${escapeHtml((active.corpo || '').replace('[SIGNATURE]', currentReviewer || 'Thali'))}</div>
+        <div class="pvp-body">${escapeHtml((active.corpo || '').replace('[SIGNATURE]', currentReviewer || 'Talita'))}</div>
         ${active.whatsapp_d5 ? `<div class="pvp-whatsapp"><div class="lbl">WhatsApp follow-up D+5</div><div class="text">${escapeHtml(active.whatsapp_d5)}</div></div>` : ''}
       </div>
     </div>`;
@@ -1068,11 +1068,11 @@ document.addEventListener('keydown', e => {
 });
 
 async function init() {
-  const saved = getReviewer() || 'Thali';
+  const saved = getReviewer() || 'Talita';
   currentReviewer = saved;
   localStorage.setItem('v360_qa_reviewer', saved);
-  document.getElementById('tabThali').classList.toggle('active', saved === 'Thali');
-  document.getElementById('tabAnaLu').classList.toggle('active', saved === 'Ana Lu');
+  document.getElementById('tabTalita').classList.toggle('active', saved === 'Talita');
+  document.getElementById('tabAnaLu').classList.toggle('active', saved === 'Ana');
   try {
     await loadLeadsFromSupabase();
     await loadReviewsFromSupabase();
